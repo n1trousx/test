@@ -1,0 +1,39 @@
+# Import the Selenium module
+Import-Module Selenium
+
+# Create a new instance of Chrome options to set it to incognito mode
+$options = New-Object OpenQA.Selenium.Chrome.ChromeOptions
+$options.AddArgument("--incognito")
+
+# Create a new Chrome driver with the specified options
+$driver = New-Object OpenQA.Selenium.Chrome.ChromeDriver("C:\chromedriver-win64", $options)
+
+# Navigate to the URL
+$driver.Navigate().GoToUrl("https://snort.org/downloads/ip-block-list/terms")
+
+# Wait for the page to load completely (optional)
+Start-Sleep -Seconds 3  # Adjust the wait time as necessary
+
+# Locate the "Accept" button by its class name and click it
+$acceptButton = $driver.FindElementByClassName("btn-primary")
+$acceptButton.Click()
+
+# Wait for the page to load the IP addresses (adjust the wait time if necessary)
+Start-Sleep -Seconds 5
+
+# Get the page source and clean it up
+$pageSource = $driver.PageSource
+$cleanedData = $pageSource -replace "<.*?>", "" -replace "\s+", "`r`n" -replace "^\s+|\s+$", "" | Where-Object { $_ -ne "" }
+
+# Specify the output file path
+$outputFilePath = "C:\Talos\Talos.txt"
+
+# Save the cleaned IP addresses to the text file, one IP per line
+$cleanedData | Out-File -FilePath $outputFilePath -Encoding UTF8
+
+# Close the driver
+$driver.Quit()
+
+# Copy the file to the specified network location
+$destinationPath = "C:\inetpub\wwwroot\Talos.txt"
+Copy-Item -Path $outputFilePath -Destination $destinationPath -Force
